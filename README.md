@@ -36,6 +36,17 @@ pip install .
 inbound-tms-diagram
 ```
 
+## Single-file executable (optional)
+
+A convenient single-file archive can be built with `shiv` and run directly with Python (no install required):
+
+```bash
+./build_executable.sh
+python dist/inbound-tms-diagram.pyz
+```
+
+This produces `dist/inbound-tms-diagram.pyz`, which starts the Streamlit app the same as running `streamlit run`.
+
 ## Docker (optional)
 
 If you prefer running the app in a container, build and run via Docker:

@@ -7,3 +7,7 @@ __pycache__/
 # Packaging/build artifacts
 *.egg-info/
 pip-wheel-metadata/
+
+# Build outputs
+dist/
+build/
