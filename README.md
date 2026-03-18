@@ -23,6 +23,30 @@ streamlit run inbound_tms_diagram_app.py
 
 Then open the URL shown in the console (typically `http://localhost:8501`).
 
+## Install as a Python package (optional)
+
+From a fresh checkout, you can install and run the app like a normal Python package:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install .
+
+# then run
+inbound-tms-diagram
+```
+
+## Docker (optional)
+
+If you prefer running the app in a container, build and run via Docker:
+
+```bash
+docker build -t inbound-tms-diagram .
+docker run --rm -p 8501:8501 inbound-tms-diagram
+```
+
+Then visit `http://localhost:8501` in your browser.
+
 ## Notes
 
 - The app renders PlantUML diagrams by generating a PlantUML server URL (no local PlantUML/JVM required).

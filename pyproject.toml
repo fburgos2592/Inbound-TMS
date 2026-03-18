@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inbound-tms-diagram"
+version = "0.1.0"
+description = "Interactive PlantUML viewer/editor for the Inbound TMS project."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Inbound TMS", email = "noreply@example.com" },
+]
+dependencies = [
+  "streamlit==1.55.0",
+]
+
+[project.scripts]
+inbound-tms-diagram = "inbound_tms_diagram_app:main"
+
+[tool.setuptools]
+py-modules = ["inbound_tms_diagram_app"]

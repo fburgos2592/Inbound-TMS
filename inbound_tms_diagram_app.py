@@ -642,3 +642,29 @@ st.info(
     "If rendering fails, try switching servers (left sidebar) or choose PNG. "
     "Some servers restrict advanced includes/macros; these diagrams avoid external includes for reliability."
 )
+
+
+def main() -> None:
+    """Run the Streamlit app.
+
+    This allows the repo to be installed as a package and run via a console script:
+      pip install .
+      inbound-tms-diagram
+    """
+
+    # Streamlit doesn't provide a simple public API for programmatic execution,
+    # so we reuse the same CLI entrypoint it uses when you run `streamlit run`.
+    import sys
+
+    # When installed as a package, __file__ will point to the installed module.
+    sys.argv = ["streamlit", "run", __file__]
+
+    # The Streamlit CLI entrypoint is stable; this is the same path used by the
+    # `streamlit` console script.
+    import streamlit.web.cli as stcli
+
+    raise SystemExit(stcli.main())
+
+
+if __name__ == "__main__":
+    main()
