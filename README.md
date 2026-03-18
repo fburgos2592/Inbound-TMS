@@ -47,6 +47,8 @@ python dist/inbound-tms-diagram.pyz
 
 This produces `dist/inbound-tms-diagram.pyz`, which starts the Streamlit app the same as running `streamlit run`.
 
+> ✅ A GitHub Actions workflow is configured to build and upload `dist/inbound-tms-diagram.pyz` on every push/PR to `main`.
+
 ## Docker (optional)
 
 If you prefer running the app in a container, build and run via Docker:
