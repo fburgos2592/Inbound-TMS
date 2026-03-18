@@ -1,5 +1,7 @@
 # Inbound-TMS
 
+[![Build](https://github.com/fburgos2592/Inbound-TMS/actions/workflows/build.yml/badge.svg)](https://github.com/fburgos2592/Inbound-TMS/actions/workflows/build.yml)
+
 Interactive viewer/editor for PlantUML diagrams used in the Inbound TMS project.
 
 ## Requirements
