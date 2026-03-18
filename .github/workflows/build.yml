@@ -28,6 +28,26 @@ jobs:
       - name: Build single-file executable
         run: ./build_executable.sh
 
+      - name: Build and smoke-test Docker container
+        run: |
+          docker build -t inbound-tms-diagram .
+
+          # Run the container in the background, then verify it responds on /.
+          CONTAINER_ID=$(docker run -d -p 8501:8501 inbound-tms-diagram)
+          echo "Started container $CONTAINER_ID"
+
+          for i in {1..20}; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8501/ || echo "")
+            if [ "$status" = "200" ]; then
+              echo "App is responding (HTTP 200)"
+              break
+            fi
+            echo "Waiting for app to start... (attempt $i)"
+            sleep 2
+          done
+
+          docker stop "$CONTAINER_ID" || true
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
