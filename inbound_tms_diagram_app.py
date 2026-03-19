@@ -538,110 +538,111 @@ DIAGRAMS = [
 # Streamlit UI
 # -------------------------
 
-st.set_page_config(page_title="Inbound TMS Diagram Explorer", layout="wide")
+if __name__ == "__main__":
+    st.set_page_config(page_title="Inbound TMS Diagram Explorer", layout="wide")
 
-st.title("Inbound TMS Diagram Explorer")
-st.caption("Interactive PlantUML viewer/editor for C4 layers, domain UML, and sequence diagrams.")
+    st.title("Inbound TMS Diagram Explorer")
+    st.caption("Interactive PlantUML viewer/editor for C4 layers, domain UML, and sequence diagrams.")
 
-with st.sidebar:
-    st.header("Renderer")
-    server = st.selectbox(
-        "PlantUML server",
-        [
-            "https://www.plantuml.com/plantuml",
-            "https://render.powerplantuml.com/plantuml",
-        ],
-        help="Choose a server to render SVG/PNG. SVG is best for docs.",
-    )
-    fmt = st.radio("Format", ["svg", "png"], index=0)
+    with st.sidebar:
+        st.header("Renderer")
+        server = st.selectbox(
+            "PlantUML server",
+            [
+                "https://www.plantuml.com/plantuml",
+                "https://render.powerplantuml.com/plantuml",
+            ],
+            help="Choose a server to render SVG/PNG. SVG is best for docs.",
+        )
+        fmt = st.radio("Format", ["svg", "png"], index=0)
 
-    st.divider()
-    st.header("Diagram")
-    key_to_idx = {d.key: i for i, d in enumerate(DIAGRAMS)}
-    chosen = st.selectbox(
-        "Select",
-        options=[d.key for d in DIAGRAMS],
-        format_func=lambda k: next(d.title for d in DIAGRAMS if d.key == k),
-    )
-
-
-d = DIAGRAMS[key_to_idx[chosen]]
-
-col_left, col_right = st.columns([0.48, 0.52], gap="large")
-
-with col_left:
-    st.subheader(d.title)
-    st.write(d.description)
-
-    st.markdown("**Edit PlantUML**")
-    default_text = d.plantuml
-    edited = st.text_area("", value=default_text, height=520, key=f"code_{d.key}")
-
-    st.markdown("**Tips**")
-    st.markdown(
-        "- Use `skinparam Shadowing false` and more `Ranksep/Nodesep` for readability.\n"
-        "- Split long sequences by phase (Planning, Booking, Execution, Trace, Scheduling).\n"
-        "- Keep C4 L1 simple: actors + systems only."
-    )
-
-with col_right:
-    st.subheader("Rendered")
-
-    try:
-        url = plantuml_url(server, fmt, edited)
-    except Exception as e:
-        st.error(f"Could not build render URL: {e}")
-        url = None
-
-    if url:
-        st.markdown(f"**Render URL:** {url}")
-
-        if fmt == "png":
-            st.image(url, use_container_width=True)
-        else:
-            # SVG: embed so it stays crisp when zooming
-            svg_html = f"""
-            <div style='width:100%; height: 820px; border:1px solid #eee; overflow:auto;'>
-              <object data="{url}" type="image/svg+xml" style="width:100%; height: 820px;"></object>
-            </div>
-            """
-            st.components.v1.html(svg_html, height=860, scrolling=True)
-
-        st.download_button(
-            "Download PlantUML (.puml)",
-            data=edited.encode("utf-8"),
-            file_name=f"{d.key}.puml",
-            mime="text/plain",
+        st.divider()
+        st.header("Diagram")
+        key_to_idx = {d.key: i for i, d in enumerate(DIAGRAMS)}
+        chosen = st.selectbox(
+            "Select",
+            options=[d.key for d in DIAGRAMS],
+            format_func=lambda k: next(d.title for d in DIAGRAMS if d.key == k),
         )
 
-st.divider()
 
-st.header("All Layers — Quick Gallery")
-st.caption("Use this to scan quickly; click a tab to open and edit.")
+    d = DIAGRAMS[key_to_idx[chosen]]
 
-layer_tabs = st.tabs(["C4 L1", "C4 L2", "C4 L3", "UML", "Seq (As-Is)", "Seq (Overlay)"])
+    col_left, col_right = st.columns([0.48, 0.52], gap="large")
 
-for tab, diagram_key in zip(layer_tabs, ["c4_l1", "c4_l2", "c4_l3", "uml_full", "seq_current", "seq_overlay"]):
-    diag = DIAGRAMS[key_to_idx[diagram_key]]
-    with tab:
-        st.subheader(diag.title)
-        st.caption(diag.description)
+    with col_left:
+        st.subheader(d.title)
+        st.write(d.description)
+
+        st.markdown("**Edit PlantUML**")
+        default_text = d.plantuml
+        edited = st.text_area("PlantUML Code", value=default_text, height=520, key=f"code_{d.key}")
+
+        st.markdown("**Tips**")
+        st.markdown(
+            "- Use `skinparam Shadowing false` and more `Ranksep/Nodesep` for readability.\n"
+            "- Split long sequences by phase (Planning, Booking, Execution, Trace, Scheduling).\n"
+            "- Keep C4 L1 simple: actors + systems only."
+        )
+
+    with col_right:
+        st.subheader("Rendered")
+
         try:
-            u = plantuml_url(server, fmt, st.session_state.get(f"code_{diag.key}", diag.plantuml))
-            if fmt == "png":
-                st.image(u, use_container_width=True)
-            else:
-                st.components.v1.html(
-                    f"<object data='{u}' type='image/svg+xml' style='width:100%; height: 520px; border:1px solid #eee;'></object>",
-                    height=540,
-                )
+            url = plantuml_url(server, fmt, edited)
         except Exception as e:
-            st.error(str(e))
+            st.error(f"Could not build render URL: {e}")
+            url = None
 
-st.info(
-    "If rendering fails, try switching servers (left sidebar) or choose PNG. "
-    "Some servers restrict advanced includes/macros; these diagrams avoid external includes for reliability."
-)
+        if url:
+            st.markdown(f"**Render URL:** {url}")
+
+            if fmt == "png":
+                st.image(url, use_container_width=True)
+            else:
+                # SVG: embed so it stays crisp when zooming
+                svg_html = f"""
+                <div style='width:100%; height: 820px; border:1px solid #eee; overflow:auto;'>
+                  <object data="{url}" type="image/svg+xml" style="width:100%; height: 820px;"></object>
+                </div>
+                """
+                st.components.v1.html(svg_html, height=860, scrolling=True)
+
+            st.download_button(
+                "Download PlantUML (.puml)",
+                data=edited.encode("utf-8"),
+                file_name=f"{d.key}.puml",
+                mime="text/plain",
+            )
+
+    st.divider()
+
+    st.header("All Layers — Quick Gallery")
+    st.caption("Use this to scan quickly; click a tab to open and edit.")
+
+    layer_tabs = st.tabs(["C4 L1", "C4 L2", "C4 L3", "UML", "Seq (As-Is)", "Seq (Overlay)"])
+
+    for tab, diagram_key in zip(layer_tabs, ["c4_l1", "c4_l2", "c4_l3", "uml_full", "seq_current", "seq_overlay"]):
+        diag = DIAGRAMS[key_to_idx[diagram_key]]
+        with tab:
+            st.subheader(diag.title)
+            st.caption(diag.description)
+            try:
+                u = plantuml_url(server, fmt, st.session_state.get(f"code_{diag.key}", diag.plantuml))
+                if fmt == "png":
+                    st.image(u, use_container_width=True)
+                else:
+                    st.components.v1.html(
+                        f"<object data='{u}' type='image/svg+xml' style='width:100%; height: 520px; border:1px solid #eee;'></object>",
+                        height=540,
+                    )
+            except Exception as e:
+                st.error(str(e))
+
+    st.info(
+        "If rendering fails, try switching servers (left sidebar) or choose PNG. "
+        "Some servers restrict advanced includes/macros; these diagrams avoid external includes for reliability."
+    )
 
 
 def main() -> None:
@@ -665,6 +666,3 @@ def main() -> None:
 
     raise SystemExit(stcli.main())
 
-
-if __name__ == "__main__":
-    main()
