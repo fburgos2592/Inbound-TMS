@@ -66,9 +66,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pip install .
+          pip install ".[dev]"
           python -c "import inbound_tms_diagram_app; print('import ok')"
           command -v inbound-tms-diagram
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/ -v
 
       - name: Build and smoke-test Docker container
         shell: bash

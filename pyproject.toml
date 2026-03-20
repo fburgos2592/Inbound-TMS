@@ -19,5 +19,8 @@ dependencies = [
 [project.scripts]
 inbound-tms-diagram = "inbound_tms_diagram_app:main"
 
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
 [tool.setuptools]
 py-modules = ["inbound_tms_diagram_app"]
