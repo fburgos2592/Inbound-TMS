@@ -1,4 +1,4 @@
-name: Build single-file executable
+name: Build + smoke test
 
 on:
   push:
@@ -6,9 +6,24 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege by default
+permissions:
+  contents: read
+
+# Cancel in-progress runs for the same branch/PR when superseded
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    name: python-${{ matrix.python-version }}
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
 
     steps:
       - name: Checkout repository
@@ -17,39 +32,80 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
 
-      - name: Install dependencies
+      - name: Verify required tools
+        shell: bash
         run: |
+          set -euo pipefail
+          command -v curl
+          command -v docker
+
+      - name: Install dependencies (build tooling)
+        shell: bash
+        run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install shiv
 
-      - name: Build single-file executable
-        run: ./build_executable.sh
+      - name: Build single-file executable (.pyz)
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./build_executable.sh
+          ./build_executable.sh
+          test -f dist/inbound-tms-diagram.pyz
+          python -c "import zipfile; z=zipfile.ZipFile('dist/inbound-tms-diagram.pyz'); print('pyz OK, entries:', len(z.namelist()))"
+
+      - name: Install as package (validate pyproject + entrypoint)
+        shell: bash
+        run: |
+          set -euo pipefail
+          pip install .
+          python -c "import inbound_tms_diagram_app; print('import ok')"
+          command -v inbound-tms-diagram
 
       - name: Build and smoke-test Docker container
+        shell: bash
         run: |
+          set -euo pipefail
+
           docker build -t inbound-tms-diagram .
 
-          # Run the container in the background, then verify it responds on /.
           CONTAINER_ID=$(docker run -d -p 8501:8501 inbound-tms-diagram)
           echo "Started container $CONTAINER_ID"
 
-          for i in {1..20}; do
-            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8501/ || echo "")
+          success="false"
+          for i in {1..30}; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8501/ || true)
             if [ "$status" = "200" ]; then
               echo "App is responding (HTTP 200)"
+              success="true"
               break
             fi
-            echo "Waiting for app to start... (attempt $i)"
+            echo "Waiting for app to start... (attempt $i, status=${status:-unknown})"
             sleep 2
           done
 
+          # Always print logs to help debugging
+          docker logs "$CONTAINER_ID" || true
+
           docker stop "$CONTAINER_ID" || true
 
-      - name: Upload artifact
+          if [ "$success" != "true" ]; then
+            echo "ERROR: Streamlit app did not become healthy (HTTP 200) in time."
+            exit 1
+          fi
+
+      - name: Upload artifact (.pyz)
+        if: ${{ matrix.python-version == '3.12' }}
         uses: actions/upload-artifact@v4
         with:
-          name: inbound-tms-diagram
+          name: inbound-tms-diagram-pyz
           path: dist/inbound-tms-diagram.pyz
+          if-no-files-found: error
